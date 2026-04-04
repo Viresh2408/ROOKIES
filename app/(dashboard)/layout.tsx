@@ -7,6 +7,7 @@ import { Container } from "@/components/layout/container";
 import {
     Flame,
     LayoutDashboard,
+    LayoutGrid,
     ShoppingBag,
     Users,
     IndianRupee,
@@ -24,6 +25,7 @@ import { logout } from "@/lib/firebase-auth";
 
 const sidebarLinks = [
     { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+    { href: "/dashboard/ops-canvas", label: "Canvas", icon: LayoutGrid },
     { href: "/dashboard/orders", label: "Orders", icon: ShoppingBag },
     { href: "/dashboard/customers", label: "Customers", icon: Users },
     { href: "/dashboard/payments", label: "Payments", icon: IndianRupee },

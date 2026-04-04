@@ -134,3 +134,18 @@ body {
 .dark .glass-nav {
   background: rgba(26, 17, 12, 0.9);
 }
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 200ms ease-out;
+}
