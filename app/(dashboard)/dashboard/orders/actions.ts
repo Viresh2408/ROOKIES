@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { OrderStatus } from "@/types/database";
 
 /**
- * Fetch all orders (Supabase flat `orders` table).
+ * Fetch all orders (Supabase flat `orders` table), excluding out-for-delivery.
  */
 function normalizeStatus(status: string | null): OrderStatus {
     const upper = (status ?? "PLACED").toUpperCase();
@@ -29,7 +29,7 @@ export async function getOrdersForUser() {
             .select(
                 "id, customer_name, customer_phone, items, total_amount, status, delivery_time, source, created_at, note"
             )
-            .in("status", ["PLACED", "PREPARING", "READY", "OUT_FOR_DELIVERY", "DELIVERED"])
+            .or("status.is.null,status.not.ilike.%out%for%delivery%")
             .order("created_at", { ascending: false });
 
         if (error || !orders) {
