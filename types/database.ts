@@ -66,6 +66,8 @@ export interface Order {
     estimated_delivery_time?: string | null;
     otp?: string | null;
     otp_verified?: boolean;
+    invoice_url?: string | null;
+    invoice_created_at?: string | null;
     created_at: string;
 }
 

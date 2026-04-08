@@ -27,7 +27,7 @@ export async function getOrdersForUser() {
         const { data: orders, error } = await supabase
             .from("orders")
             .select(
-                "id, customer_name, customer_phone, items, total_amount, status, delivery_time, source, created_at, note"
+                "id, customer_name, customer_phone, items, total_amount, status, delivery_time, source, created_at, note, invoice_url, invoice_created_at"
             )
             .or("status.is.null,status.not.ilike.%out%for%delivery%")
             .order("created_at", { ascending: false });
@@ -51,6 +51,8 @@ export async function getOrdersForUser() {
             notes: o.note ?? (Array.isArray(o.items) ? JSON.stringify(o.items) : (o.items as unknown as string | null)),
             source: o.source,
             delivery_date: safeToIso((o as { delivery_time?: string | null }).delivery_time ?? null),
+            invoice_url: (o as { invoice_url?: string | null }).invoice_url ?? null,
+            invoice_created_at: safeToIso((o as { invoice_created_at?: string | null }).invoice_created_at ?? null),
             created_at: safeToIso((o as { created_at?: string | null }).created_at ?? null) ??
                 (o as { created_at?: string | null }).created_at ?? "",
             customer_name: o.customer_name ?? null,

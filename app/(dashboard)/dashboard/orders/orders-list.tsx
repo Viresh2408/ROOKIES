@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Phone, Clock, MessageCircle, CheckCircle2, PackageOpen, ShoppingBag, Truck } from "lucide-react";
+import {
+    Phone,
+    Clock,
+    MessageCircle,
+    CheckCircle2,
+    PackageOpen,
+    ShoppingBag,
+    Truck,
+    FileText,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -21,6 +30,8 @@ interface OrderRow {
     notes: string | null;
     source: string | null;
     delivery_date: string | null;
+    invoice_url?: string | null;
+    invoice_created_at?: string | null;
     created_at: string;
     customer_name: string | null;
     customer_phone: string | null;
@@ -139,10 +150,46 @@ function nextStatusFor(status: OrderStatus): OrderStatus | null {
 function OrderCard({ order }: { order: OrderRow }) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [invoiceUrl, setInvoiceUrl] = useState(order.invoice_url ?? null);
+    const [invoiceLoading, setInvoiceLoading] = useState(false);
 
     const items = parseItems(order.notes);
     const paid = isPaid(order.payments);
     const nextStatus = nextStatusFor(order.status);
+    const canCreateInvoice = order.status === "READY" && !invoiceUrl;
+    const canViewInvoice = Boolean(invoiceUrl);
+
+    async function handleCreateInvoice() {
+        if (!canCreateInvoice || invoiceLoading) return;
+        setInvoiceLoading(true);
+        try {
+            const res = await fetch("/api/invoice/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ orderId: order.id }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data?.success) {
+                toast.error(data?.error ?? "Failed to create invoice");
+                return;
+            }
+            if (!data?.invoice_url) {
+                toast.error("Invoice URL missing in response");
+                return;
+            }
+            setInvoiceUrl(data.invoice_url);
+            router.refresh();
+            toast.success("Invoice created");
+        } catch (_err) {
+            toast.error("Unable to create invoice");
+        } finally {
+            setInvoiceLoading(false);
+        }
+    }
+
+    function handleViewInvoice() {
+        router.push(`/dashboard/orders/${order.id}/invoice`);
+    }
 
     async function handleAdvance() {
         if (order.status === "READY") {
@@ -254,6 +301,30 @@ function OrderCard({ order }: { order: OrderRow }) {
                 <p className="text-xs text-muted-foreground">
                     Placed on {formatDate(order.created_at)}
                 </p>
+
+                {/* Invoice actions */}
+                {canCreateInvoice && (
+                    <Button
+                        className="w-full border-primary text-primary hover:bg-primary/10"
+                        variant="outline"
+                        onClick={handleCreateInvoice}
+                        isLoading={invoiceLoading}
+                    >
+                        <FileText className="h-4 w-4" />
+                        Create Invoice
+                    </Button>
+                )}
+
+                {canViewInvoice && (
+                    <Button
+                        className="w-full border-primary text-primary hover:bg-primary/10"
+                        variant="outline"
+                        onClick={handleViewInvoice}
+                    >
+                        <FileText className="h-4 w-4" />
+                        View Invoice
+                    </Button>
+                )}
 
                 {/* CTA */}
                 {order.status !== "DELIVERED" && nextStatus && order.status !== "READY" && (

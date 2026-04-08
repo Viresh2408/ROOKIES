@@ -87,6 +87,8 @@ model Order {
   estimated_delivery_time DateTime?
   otp                     String?
   otp_verified            Boolean  @default(false)
+  invoice_url             String?
+  invoice_created_at      DateTime?
   created_at              DateTime @default(now())
 
   business Business? @relation(fields: [business_id], references: [id], onDelete: SetNull)
