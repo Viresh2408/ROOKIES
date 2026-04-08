@@ -35,6 +35,14 @@ function buildError(message: string, status = 400) {
     return NextResponse.json({ success: false, error: message }, { status });
 }
 
+function safePdfText(value: string): string {
+    return value
+        .replace(/₹/g, "INR ")
+        .replace(/[^\x20-\x7E]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
 async function generateInvoicePdfBuffer(
     order: InvoiceOrderRow,
     items: InvoiceLineItem[]
@@ -53,8 +61,8 @@ async function generateInvoicePdfBuffer(
     const muted = rgb(0.45, 0.45, 0.45);
     const line = rgb(0.87, 0.87, 0.87);
 
-    page.drawText("Rookies", { x: margin, y: cursorY, size: 18, font: bold, color: dark });
-    page.drawText("Invoice", {
+    page.drawText(safePdfText("Rookies"), { x: margin, y: cursorY, size: 18, font: bold, color: dark });
+    page.drawText(safePdfText("Invoice"), {
         x: width - margin - 64,
         y: cursorY,
         size: 18,
@@ -65,14 +73,14 @@ async function generateInvoicePdfBuffer(
     cursorY -= 26;
 
     const issuedAt = formatInvoiceDate(order.invoice_created_at ?? order.created_at ?? null);
-    page.drawText(`Order #${formatOrderNumber(order.id)}`, {
+    page.drawText(safePdfText(`Order #${formatOrderNumber(order.id)}`), {
         x: margin,
         y: cursorY,
         size: 11,
         font: bold,
         color: dark,
     });
-    page.drawText(`Issued: ${issuedAt}`, {
+    page.drawText(safePdfText(`Issued: ${issuedAt}`), {
         x: width - margin - 200,
         y: cursorY,
         size: 10,
@@ -86,14 +94,14 @@ async function generateInvoicePdfBuffer(
     const customerName = order.customer_name ?? "Walk-in customer";
     const customerPhone = order.customer_phone ?? "Phone not shared";
 
-    page.drawText(`Customer: ${customerName}`, {
+    page.drawText(safePdfText(`Customer: ${customerName}`), {
         x: margin,
         y: cursorY,
         size: 10,
         font,
         color: muted,
     });
-    page.drawText(`Status: ${status}`, {
+    page.drawText(safePdfText(`Status: ${status}`), {
         x: width - margin - 200,
         y: cursorY,
         size: 10,
@@ -103,7 +111,7 @@ async function generateInvoicePdfBuffer(
 
     cursorY -= 14;
 
-    page.drawText(`Phone: ${customerPhone}`, {
+    page.drawText(safePdfText(`Phone: ${customerPhone}`), {
         x: margin,
         y: cursorY,
         size: 10,
@@ -122,8 +130,8 @@ async function generateInvoicePdfBuffer(
 
     cursorY -= 14;
 
-    page.drawText("Item", { x: margin, y: cursorY, size: 10, font: bold, color: muted });
-    page.drawText("Qty", {
+    page.drawText(safePdfText("Item"), { x: margin, y: cursorY, size: 10, font: bold, color: muted });
+    page.drawText(safePdfText("Qty"), {
         x: width - margin - 30,
         y: cursorY,
         size: 10,
@@ -143,7 +151,7 @@ async function generateInvoicePdfBuffer(
     cursorY -= 14;
 
     if (items.length === 0) {
-        page.drawText("No item details available.", {
+        page.drawText(safePdfText("No item details available."), {
             x: margin,
             y: cursorY,
             size: 10,
@@ -154,8 +162,8 @@ async function generateInvoicePdfBuffer(
     } else {
         items.forEach((item) => {
             if (cursorY < margin + 80) return;
-            page.drawText(item.name, { x: margin, y: cursorY, size: 10, font, color: dark });
-            page.drawText(String(item.quantity), {
+            page.drawText(safePdfText(item.name), { x: margin, y: cursorY, size: 10, font, color: dark });
+            page.drawText(safePdfText(String(item.quantity)), {
                 x: width - margin - 30,
                 y: cursorY,
                 size: 10,
@@ -177,8 +185,8 @@ async function generateInvoicePdfBuffer(
 
     cursorY -= 18;
 
-    const total = formatINR(Number(order.total_amount) || 0);
-    page.drawText("Total", {
+    const total = safePdfText(formatINR(Number(order.total_amount) || 0));
+    page.drawText(safePdfText("Total"), {
         x: width - margin - 140,
         y: cursorY,
         size: 12,
