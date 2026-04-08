@@ -179,7 +179,7 @@ function OrderCard({ order }: { order: OrderRow }) {
             }
             setInvoiceUrl(data.invoice_url);
             router.refresh();
-            toast.success("Invoice created");
+            toast.success("PDF created");
         } catch (_err) {
             toast.error("Unable to create invoice");
         } finally {
@@ -305,24 +305,20 @@ function OrderCard({ order }: { order: OrderRow }) {
                 {/* Invoice actions */}
                 {canCreateInvoice && (
                     <Button
-                        className="w-full border-primary text-primary hover:bg-primary/10"
-                        variant="outline"
+                        className="w-full"
+                        variant="primary"
                         onClick={handleCreateInvoice}
                         isLoading={invoiceLoading}
                     >
                         <FileText className="h-4 w-4" />
-                        Create Invoice
+                        Create PDF
                     </Button>
                 )}
 
                 {canViewInvoice && (
-                    <Button
-                        className="w-full border-primary text-primary hover:bg-primary/10"
-                        variant="outline"
-                        onClick={handleViewInvoice}
-                    >
+                    <Button className="w-full" variant="outline" onClick={handleViewInvoice}>
                         <FileText className="h-4 w-4" />
-                        View Invoice
+                        View PDF
                     </Button>
                 )}
 
@@ -335,7 +331,12 @@ function OrderCard({ order }: { order: OrderRow }) {
                 )}
 
                 {order.status === "READY" && (
-                    <Button className="w-full" onClick={handleAdvance} isLoading={loading}>
+                    <Button
+                        className="w-full"
+                        variant={canCreateInvoice ? "secondary" : "primary"}
+                        onClick={handleAdvance}
+                        isLoading={loading}
+                    >
                         <Truck className="h-4 w-4" />
                         Start Delivery
                     </Button>

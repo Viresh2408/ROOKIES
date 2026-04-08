@@ -208,13 +208,32 @@ export async function POST(request: Request) {
         const { orderId } = parsed.data;
         const supabase = getSupabaseAdmin();
 
-        const { data: order, error } = await supabase
+        const baseSelect =
+            "id, customer_name, customer_phone, items, total_amount, status, created_at, note";
+        const invoiceSelect = `${baseSelect}, invoice_url, invoice_created_at`;
+
+        let { data: order, error } = await supabase
             .from("orders")
-            .select(
-                "id, customer_name, customer_phone, items, total_amount, status, created_at, note, invoice_url, invoice_created_at"
-            )
+            .select(invoiceSelect)
             .eq("id", orderId)
             .single();
+
+        if (error?.code === "42703") {
+            console.warn("[invoice] Missing invoice columns, retrying without them", error);
+            const fallback = await supabase
+                .from("orders")
+                .select(baseSelect)
+                .eq("id", orderId)
+                .single();
+            error = fallback.error;
+            if (fallback.data) {
+                order = {
+                    ...fallback.data,
+                    invoice_url: null,
+                    invoice_created_at: null,
+                } as InvoiceOrderRow;
+            }
+        }
 
         if (error || !order) {
             console.error("[invoice] order fetch error", error);
@@ -249,6 +268,9 @@ export async function POST(request: Request) {
 
         if (updateError) {
             console.error("[invoice] update error", updateError);
+            if (updateError.code === "42703") {
+                return buildError("Invoice fields are missing. Run the DB migration.", 500);
+            }
             return buildError("Failed to save invoice", 500);
         }
 

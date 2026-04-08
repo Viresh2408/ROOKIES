@@ -24,13 +24,26 @@ function normalizeStatus(status: string | null): OrderStatus {
 export async function getOrdersForUser() {
     try {
         const supabase = getSupabaseAdmin();
-        const { data: orders, error } = await supabase
+        const baseSelect =
+            "id, customer_name, customer_phone, items, total_amount, status, delivery_time, source, created_at, note";
+        const invoiceSelect = `${baseSelect}, invoice_url, invoice_created_at`;
+
+        let { data: orders, error } = await supabase
             .from("orders")
-            .select(
-                "id, customer_name, customer_phone, items, total_amount, status, delivery_time, source, created_at, note, invoice_url, invoice_created_at"
-            )
+            .select(invoiceSelect)
             .or("status.is.null,status.not.ilike.%out%for%delivery%")
             .order("created_at", { ascending: false });
+
+        if (error?.code === "42703") {
+            console.warn("[orders] Missing invoice columns, retrying without them", error);
+            const fallback = await supabase
+                .from("orders")
+                .select(baseSelect)
+                .or("status.is.null,status.not.ilike.%out%for%delivery%")
+                .order("created_at", { ascending: false });
+            orders = fallback.data;
+            error = fallback.error;
+        }
 
         if (error || !orders) {
             console.error("[orders] supabase fetch error", error);

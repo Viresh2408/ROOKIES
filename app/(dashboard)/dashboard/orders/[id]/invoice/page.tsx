@@ -18,13 +18,32 @@ type PageProps = {
 
 export default async function InvoicePage({ params }: PageProps) {
     const supabase = getSupabaseAdmin();
-    const { data: order, error } = await supabase
+    const baseSelect =
+        "id, customer_name, customer_phone, items, total_amount, status, created_at, note";
+    const invoiceSelect = `${baseSelect}, invoice_url, invoice_created_at`;
+
+    let { data: order, error } = await supabase
         .from("orders")
-        .select(
-            "id, customer_name, customer_phone, items, total_amount, status, created_at, note, invoice_url, invoice_created_at"
-        )
+        .select(invoiceSelect)
         .eq("id", params.id)
         .single();
+
+    if (error?.code === "42703") {
+        console.warn("[invoice] Missing invoice columns, retrying without them", error);
+        const fallback = await supabase
+            .from("orders")
+            .select(baseSelect)
+            .eq("id", params.id)
+            .single();
+        error = fallback.error;
+        if (fallback.data) {
+            order = {
+                ...fallback.data,
+                invoice_url: null,
+                invoice_created_at: null,
+            } as typeof order;
+        }
+    }
 
     if (error || !order) {
         return (
