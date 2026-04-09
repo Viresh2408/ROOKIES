@@ -188,6 +188,10 @@ function OrderCard({ order }: { order: OrderRow }) {
     }
 
     function handleViewInvoice() {
+        if (!order.id) {
+            toast.error("Order ID is missing");
+            return;
+        }
         const query = invoiceUrl ? `?invoiceUrl=${encodeURIComponent(invoiceUrl)}` : "";
         router.push(`/dashboard/orders/${order.id}/invoice${query}`);
     }

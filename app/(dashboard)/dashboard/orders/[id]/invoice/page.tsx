@@ -18,6 +18,64 @@ type PageProps = {
 };
 
 export default async function InvoicePage({ params, searchParams }: PageProps) {
+    const invoiceUrlFromQuery =
+        typeof searchParams?.invoiceUrl === "string" ? searchParams.invoiceUrl : null;
+    const orderId = params.id;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId);
+
+    const renderPdfOnly = (pdfUrl: string) => (
+        <div className="space-y-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-foreground">Invoice</h1>
+                    <p className="text-muted-foreground mt-1">
+                        Order details are unavailable, but the PDF is ready.
+                    </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <a
+                        href={pdfUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}
+                    >
+                        <ExternalLink className="h-4 w-4" />
+                        View PDF
+                    </a>
+                    <a
+                        href={pdfUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        download
+                        className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                    >
+                        <Download className="h-4 w-4" />
+                        Download PDF
+                    </a>
+                </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-4">
+                <iframe
+                    title={`Invoice ${orderId}`}
+                    src={pdfUrl}
+                    className="h-[700px] w-full rounded-xl border border-border"
+                />
+            </div>
+        </div>
+    );
+
+    if (!isUuid) {
+        if (invoiceUrlFromQuery) {
+            return renderPdfOnly(invoiceUrlFromQuery);
+        }
+        return (
+            <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+                Invoice not found.
+            </div>
+        );
+    }
+
     const supabase = getSupabaseAdmin();
     const baseSelect =
         "id, customer_name, customer_phone, items, total_amount, status, created_at, note";
@@ -46,8 +104,6 @@ export default async function InvoicePage({ params, searchParams }: PageProps) {
         }
     }
 
-    const invoiceUrlFromQuery =
-        typeof searchParams?.invoiceUrl === "string" ? searchParams.invoiceUrl : null;
     const resolvedInvoiceUrl = order?.invoice_url ?? invoiceUrlFromQuery ?? null;
 
     if (error || !order) {
@@ -56,47 +112,7 @@ export default async function InvoicePage({ params, searchParams }: PageProps) {
         }
 
         if (resolvedInvoiceUrl) {
-            return (
-                <div className="space-y-6">
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div>
-                            <h1 className="text-2xl font-bold text-foreground">Invoice</h1>
-                            <p className="text-muted-foreground mt-1">
-                                Order details are unavailable, but the PDF is ready.
-                            </p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            <a
-                                href={resolvedInvoiceUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}
-                            >
-                                <ExternalLink className="h-4 w-4" />
-                                View PDF
-                            </a>
-                            <a
-                                href={resolvedInvoiceUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                download
-                                className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-                            >
-                                <Download className="h-4 w-4" />
-                                Download PDF
-                            </a>
-                        </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-border bg-card p-4">
-                        <iframe
-                            title={`Invoice ${params.id}`}
-                            src={resolvedInvoiceUrl}
-                            className="h-[700px] w-full rounded-xl border border-border"
-                        />
-                    </div>
-                </div>
-            );
+            return renderPdfOnly(resolvedInvoiceUrl);
         }
 
         return (
