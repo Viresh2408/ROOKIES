@@ -18,8 +18,14 @@ type PageProps = {
 };
 
 export default async function InvoicePage({ params, searchParams }: PageProps) {
-    const invoiceUrlFromQuery =
-        typeof searchParams?.invoiceUrl === "string" ? searchParams.invoiceUrl : null;
+    const normalizeInvoiceUrl = (value: string | null | undefined) => {
+        const trimmed = value?.trim();
+        return trimmed ? trimmed : null;
+    };
+
+    const queryInvoiceUrl = normalizeInvoiceUrl(
+        typeof searchParams?.invoiceUrl === "string" ? searchParams.invoiceUrl : null
+    );
     const orderId = params.id;
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId);
 
@@ -59,15 +65,15 @@ export default async function InvoicePage({ params, searchParams }: PageProps) {
                 <iframe
                     title={`Invoice ${orderId}`}
                     src={pdfUrl}
-                    className="h-[700px] w-full rounded-xl border border-border"
+                    className="h-screen w-full rounded-xl border border-border"
                 />
             </div>
         </div>
     );
 
     if (!isUuid) {
-        if (invoiceUrlFromQuery) {
-            return renderPdfOnly(invoiceUrlFromQuery);
+        if (queryInvoiceUrl) {
+            return renderPdfOnly(queryInvoiceUrl);
         }
         return (
             <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
@@ -104,7 +110,13 @@ export default async function InvoicePage({ params, searchParams }: PageProps) {
         }
     }
 
-    const resolvedInvoiceUrl = order?.invoice_url ?? invoiceUrlFromQuery ?? null;
+    const dbInvoiceUrl = normalizeInvoiceUrl(order?.invoice_url ?? null);
+    const resolvedInvoiceUrl = dbInvoiceUrl || queryInvoiceUrl;
+
+    if (process.env.NODE_ENV !== "production") {
+        console.log("[invoice] Query URL:", queryInvoiceUrl);
+        console.log("[invoice] DB URL:", dbInvoiceUrl);
+    }
 
     if (error || !order) {
         if (error) {
@@ -175,12 +187,12 @@ export default async function InvoicePage({ params, searchParams }: PageProps) {
                     <iframe
                         title={`Invoice ${order.id}`}
                         src={resolvedInvoiceUrl}
-                        className="h-[700px] w-full rounded-xl border border-border"
+                        className="h-screen w-full rounded-xl border border-border"
                     />
                 </div>
             ) : (
                 <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-                    Invoice PDF is not available yet.
+                    Invoice not found.
                 </div>
             )}
         </div>
