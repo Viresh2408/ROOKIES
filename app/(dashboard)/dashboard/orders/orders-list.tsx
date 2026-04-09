@@ -188,7 +188,8 @@ function OrderCard({ order }: { order: OrderRow }) {
     }
 
     function handleViewInvoice() {
-        router.push(`/dashboard/orders/${order.id}/invoice`);
+        const query = invoiceUrl ? `?invoiceUrl=${encodeURIComponent(invoiceUrl)}` : "";
+        router.push(`/dashboard/orders/${order.id}/invoice${query}`);
     }
 
     async function handleAdvance() {
