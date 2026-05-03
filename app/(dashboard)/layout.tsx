@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Container } from "@/components/layout/container";
 import {
@@ -17,11 +17,12 @@ import {
     Settings,
     Menu,
     X,
-    LogOut,
-    User,
-} from "lucide-react";
-import { useState } from "react";
-import { logout } from "@/lib/firebase-auth";
+}
+from "lucide-react";
+import { useState, useEffect } from "react";
+import { UserButton } from "@clerk/nextjs";
+import { VoiceAgent } from "@/components/VoiceAgent";
+import { getCurrentBusinessId } from "@/app/(auth)/actions";
 
 const sidebarLinks = [
     { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -36,43 +37,10 @@ const sidebarLinks = [
 ];
 
 function UserMenu() {
-    const router = useRouter();
-    const [open, setOpen] = useState(false);
-
-    async function handleSignOut() {
-        await logout();
-        await fetch("/api/auth/session", { method: "DELETE" });
-        router.push("/");
-        router.refresh();
-    }
-
-    return (
-        <div className="relative">
-            <button
-                onClick={() => setOpen(!open)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-            >
-                <User className="h-4 w-4" />
-            </button>
-            {open && (
-                <>
-                    <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-                    <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-lg border border-border bg-card p-1 shadow-lg">
-                        <button
-                            onClick={handleSignOut}
-                            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                        >
-                            <LogOut className="h-4 w-4" />
-                            Sign out
-                        </button>
-                    </div>
-                </>
-            )}
-        </div>
-    );
+    return <UserButton />;
 }
 
-function Sidebar({ className }: { className?: string }) {
+function Sidebar({ className, onClose }: { className?: string; onClose?: () => void }) {
     const pathname = usePathname();
 
     return (
@@ -96,6 +64,7 @@ function Sidebar({ className }: { className?: string }) {
                         <Link
                             key={link.href}
                             href={link.href}
+                            onClick={onClose}
                             className={cn(
                                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                                 isActive
@@ -127,6 +96,11 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [businessId, setBusinessId] = useState<string | null>(null);
+
+    useEffect(() => {
+        getCurrentBusinessId().then(setBusinessId);
+    }, []);
 
     return (
         <div className="flex h-screen bg-background">
@@ -143,7 +117,7 @@ export default function DashboardLayout({
                         onClick={() => setSidebarOpen(false)}
                     />
                     <div className="fixed inset-y-0 left-0 w-64 bg-card shadow-xl">
-                        <Sidebar />
+                        <Sidebar onClose={() => setSidebarOpen(false)} />
                     </div>
                 </div>
             )}
@@ -177,6 +151,7 @@ export default function DashboardLayout({
                     </Container>
                 </main>
             </div>
+            {businessId && <VoiceAgent businessId={businessId} />}
         </div>
     );
 }

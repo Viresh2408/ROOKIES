@@ -10,22 +10,14 @@ import {
     MessageCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 
 export const metadata: Metadata = {
     title: "Dashboard",
 };
 
-// Force dynamic rendering (reads from DB on every request)
 export const dynamic = "force-dynamic";
 
-function getSupabaseAdmin() {
-    return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-}
 
 // ─── Helpers ───
 
@@ -69,42 +61,43 @@ function parseItems(items: unknown, notes: string | null): { name: string; qty: 
     return [{ name: notes, qty: 1 }];
 }
 
+import { prisma } from "@/lib/prisma";
+import { getLeaderboardStats } from "./customers/actions";
+import { Trophy, Coins, Star } from "lucide-react";
+
 export default async function DashboardPage() {
     let orderCount = 0;
     let totalRevenue = 0;
     let pendingCount = 0;
     let customerCount = 0;
-    let recentOrders: {
-        id: string;
-        status: string;
-        total_amount: number;
-        notes: string | null;
-        items: unknown;
-        source: string | null;
-        created_at: string;
-        customer_name: string | null;
-        customer_phone: string | null;
-        delivery_time: string | null;
-    }[] = [];
+    let recentOrders: any[] = [];
+    let leaderboard: any = { topSpenders: [], topItemBuyers: [], topItemCustomers: [] };
 
     try {
-        const supabase = getSupabaseAdmin();
+        leaderboard = await getLeaderboardStats();
+        // Fetch all orders for stats
+        const allOrders = await prisma.order.findMany({
+            select: {
+                id: true,
+                total_amount: true,
+                status: true,
+                customer_name: true,
+                customer_phone: true
+            }
+        });
 
-        // Fetch all orders for stats + recent 5
-        const { data: allOrders } = await supabase
-            .from("orders")
-            .select("id, total_amount, status, customer_name, customer_phone");
-
-        const { data: recent } = await supabase
-            .from("orders")
-            .select("*")
-            .order("created_at", { ascending: false })
-            .limit(5);
+        // Fetch recent 5 orders
+        const recent = await prisma.order.findMany({
+            orderBy: {
+                created_at: "desc"
+            },
+            take: 5
+        });
 
         if (allOrders) {
             orderCount = allOrders.length;
             totalRevenue = allOrders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
-            pendingCount = allOrders.filter((o) => o.status === "pending").length;
+            pendingCount = allOrders.filter((o) => o.status === "pending" || o.status === "PLACED").length;
             
             const uniqueCustomers = new Set();
             allOrders.forEach(o => {
@@ -114,10 +107,16 @@ export default async function DashboardPage() {
             customerCount = uniqueCustomers.size || orderCount;
         }
 
-        recentOrders = recent ?? [];
+        recentOrders = recent.map(r => ({
+            ...r,
+            total_amount: Number(r.total_amount),
+            created_at: r.created_at.toISOString(),
+            delivery_time: r.delivery_time ? r.delivery_time.toISOString() : null
+        }));
     } catch (err) {
         console.error("[Dashboard] DB fetch failed:", err);
     }
+
 
     const stats = [
         {
@@ -249,19 +248,58 @@ export default async function DashboardPage() {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Activity Log</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <ArrowUpRight className="h-10 w-10 text-muted-foreground/40 mb-3" />
-                            <p className="text-sm text-muted-foreground">
-                                Your business activity will be tracked here.
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
+                <div className="space-y-6">
+                    <Card className="border-2 border-yellow-500/10">
+                        <CardHeader className="bg-yellow-500/5 pb-2">
+                            <CardTitle className="text-lg flex items-center gap-2 text-yellow-700">
+                                <Trophy className="h-5 w-5" />
+                                Top Spenders
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="divide-y divide-border">
+                                {leaderboard.topSpenders.slice(0, 3).map((customer: any, index: number) => (
+                                    <div key={customer.phone} className="flex items-center justify-between p-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-6 w-6 rounded-full bg-yellow-100 text-yellow-700 flex items-center justify-center text-xs font-bold">
+                                                {index + 1}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold">{customer.name}</p>
+                                                <p className="text-[10px] text-muted-foreground">{customer.phone}</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm font-bold text-primary">₹{customer.totalSpent.toLocaleString()}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-2 border-emerald-500/10">
+                        <CardHeader className="bg-emerald-500/5 pb-2">
+                            <CardTitle className="text-lg flex items-center gap-2 text-emerald-700">
+                                <Star className="h-5 w-5" />
+                                Inventory MVPs
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="divide-y divide-border">
+                                {leaderboard.topItemCustomers.slice(0, 3).map((item: any) => (
+                                    <div key={item.itemName} className="p-3">
+                                        <div className="flex justify-between items-start mb-1">
+                                            <p className="text-sm font-bold truncate">{item.itemName}</p>
+                                            <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">
+                                                {item.count} orders
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">Top Fan: <span className="text-foreground font-medium">{item.winnerName}</span></p>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     );

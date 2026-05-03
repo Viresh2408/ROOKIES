@@ -71,7 +71,7 @@ export const step2Schema = z.object({
 });
 
 export const step3Schema = z.object({
-    whatsappNumber: z.string().min(10, "Enter a valid WhatsApp number"),
+    whatsapp: z.string().min(10, "Enter a valid WhatsApp number"),
     instagramHandle: z.string().optional(),
     paymentMethods: z.array(z.string()).min(1, "Pick at least one"),
 });

@@ -67,8 +67,10 @@ export default function FaqManagerPage() {
     }, [supabase]);
 
     useEffect(() => {
-        loadFaqs();
+        const timer = setTimeout(() => loadFaqs(), 0);
+        return () => clearTimeout(timer);
     }, [loadFaqs]);
+
 
     function handleCreate() {
         setActiveFaq(null);

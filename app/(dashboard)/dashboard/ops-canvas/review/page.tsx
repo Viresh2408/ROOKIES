@@ -82,7 +82,8 @@ export default function ReviewQueuePage() {
                 const fetched = data?.tickets ?? [];
                 setTickets(fetched);
                 setSelectedId(fetched[0]?.id ?? null);
-            } catch (error) {
+            } catch {
+
                 toast.error("Unable to load review queue");
             } finally {
                 setLoading(false);
@@ -119,7 +120,8 @@ export default function ReviewQueuePage() {
             }
             setTickets((prev) => prev.map((ticket) => (ticket.id === id ? data.ticket : ticket)));
             toast.success("Ticket updated");
-        } catch (error) {
+        } catch {
+
             toast.error("Unable to update ticket");
         }
     };

@@ -25,7 +25,7 @@ export function Step3Channels({ defaultValues, onNext, onBack }: Step3Props) {
     } = useForm<Step3Data>({
         resolver: zodResolver(step3Schema),
         defaultValues: {
-            whatsappNumber: defaultValues.whatsappNumber || "",
+            whatsapp: defaultValues.whatsapp || "",
             instagramHandle: defaultValues.instagramHandle || "",
             paymentMethods: defaultValues.paymentMethods || [],
         },
@@ -51,8 +51,8 @@ export function Step3Channels({ defaultValues, onNext, onBack }: Step3Props) {
                     label="WhatsApp Business Number"
                     placeholder="+91 98765 43210"
                     type="tel"
-                    error={errors.whatsappNumber?.message}
-                    {...register("whatsappNumber")}
+                    error={errors.whatsapp?.message}
+                    {...register("whatsapp")}
                 />
 
                 <FormInput

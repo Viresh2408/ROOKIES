@@ -1,4 +1,4 @@
-import { getAuthUser, requireAuth } from "@/lib/firebase-admin";
+import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 
@@ -11,7 +11,7 @@ export async function getUser() {
   if (!authUser) return null;
 
   const user = await prisma.user.findUnique({
-    where: { firebaseUid: authUser.uid },
+    where: { clerkId: authUser.uid },
   });
 
   return user;
@@ -29,8 +29,3 @@ export async function requireUser() {
   return user;
 }
 
-/**
- * Get the Firebase auth user (decoded token) for the current session.
- * Returns null if not authenticated.
- */
-export { getAuthUser } from "@/lib/firebase-admin";

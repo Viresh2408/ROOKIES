@@ -8,7 +8,6 @@ import {
     MessageCircle,
     CheckCircle2,
     PackageOpen,
-    ShoppingBag,
     Truck,
     FileText,
 } from "lucide-react";
@@ -180,7 +179,7 @@ function OrderCard({ order }: { order: OrderRow }) {
             setInvoiceUrl(data.invoice_url);
             router.refresh();
             toast.success("PDF created");
-        } catch (_err) {
+        } catch {
             toast.error("Unable to create invoice");
         } finally {
             setInvoiceLoading(false);
@@ -211,7 +210,7 @@ function OrderCard({ order }: { order: OrderRow }) {
                     toast.success("Delivery started");
                     router.push("/delivery");
                 }
-            } catch (_err) {
+            } catch {
                 toast.error("Unable to start delivery");
             } finally {
                 setLoading(false);
@@ -234,7 +233,7 @@ function OrderCard({ order }: { order: OrderRow }) {
                 toast.success(`Order moved to ${nextStatus.replaceAll("_", " ")}`);
                 router.refresh();
             }
-        } catch (error) {
+        } catch {
             toast.error("Unable to update order");
         } finally {
             setLoading(false);

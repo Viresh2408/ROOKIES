@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/firebase-admin";
+import { requireAuth } from "@/lib/auth";
+
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { TicketStatus } from "@/types";
 
@@ -7,9 +8,10 @@ const TABLE_NAME = "review_tickets";
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const user = await requireAuth();
         const supabase = getSupabaseAdmin();
         const body = await request.json();
@@ -25,7 +27,7 @@ export async function PATCH(
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .update({ status })
-            .eq("id", params.id)
+            .eq("id", id)
             .eq("owner_uid", user.uid)
             .select("*")
             .single();
@@ -38,7 +40,8 @@ export async function PATCH(
         }
 
         return NextResponse.json({ ticket: data });
-    } catch (error) {
+    } catch {
+
         return NextResponse.json(
             { error: "Authentication required" },
             { status: 401 }

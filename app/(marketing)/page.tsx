@@ -6,8 +6,29 @@ import {
     Check,
     Verified,
 } from "lucide-react";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { getCurrentDbUser } from "@/app/(auth)/actions";
 
-export default function HomePage() {
+export default async function HomePage() {
+    const { userId } = await auth();
+
+    if (userId) {
+        const dbUser = await getCurrentDbUser();
+        if (dbUser) {
+            const membership = await prisma.businessMember.findFirst({
+                where: { userId: dbUser.id },
+            });
+
+            if (membership) {
+                redirect("/dashboard");
+            } else {
+                redirect("/setup");
+            }
+        }
+    }
+
     return (
         <>
             {/* ─── Hero Section ─── */}
@@ -24,7 +45,7 @@ export default function HomePage() {
                             Rookies manages orders, payments, customers, and WhatsApp — so
                             you can focus on the art of creating.
                         </p>
-                        <div className="flex flex-wrap gap-4">
+                        <div className="flex flex-wrap gap-4 mb-6">
                             <Link href="/sign-up">
                                 <button className="bg-primary text-white text-base font-bold px-8 py-4 rounded-xl hover:scale-[1.02] transition-transform shadow-xl shadow-primary/30">
                                     Get Started Free
@@ -34,6 +55,18 @@ export default function HomePage() {
                                 <PlayCircle className="h-5 w-5" />
                                 Watch Demo
                             </button>
+                        </div>
+                        <div className="flex flex-wrap gap-4">
+                            <Link href="/customer/auth/sign-up">
+                                <button className="bg-white border border-primary text-primary text-base font-bold px-8 py-4 rounded-xl hover:bg-peach-soft transition-colors">
+                                    Customer
+                                </button>
+                            </Link>
+                            <Link href="/setup">
+                                <button className="bg-white border border-primary text-primary text-base font-bold px-8 py-4 rounded-xl hover:bg-peach-soft transition-colors">
+                                    Business Owner
+                                </button>
+                            </Link>
                         </div>
                     </div>
                     <div className="relative">
@@ -202,7 +235,7 @@ export default function HomePage() {
             </section>
 
             {/* ─── Meet Your Virtual Team ─── */}
-            <section id="virtual-team" className="py-24 bg-clay text-peach-soft">
+            <section id="virtual-team" className="py-24 bg-midnight text-midnight-foreground">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center mb-20">
                         <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white font-serif">

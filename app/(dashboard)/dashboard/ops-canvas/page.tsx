@@ -79,7 +79,8 @@ export default function OpsCanvasPage() {
                 setNodes(initial.nodes);
                 setEdges(initial.edges);
             }
-        } catch (error) {
+        } catch {
+
             toast.error("Unable to load workflow");
         } finally {
             setLoading(false);
@@ -210,7 +211,8 @@ export default function OpsCanvasPage() {
             }
             setWorkflowId(data.workflow?.id ?? workflowId);
             toast.success("Workflow saved");
-        } catch (error) {
+        } catch {
+
             toast.error("Unable to save workflow");
         } finally {
             setSaving(false);
@@ -316,9 +318,10 @@ export default function OpsCanvasPage() {
                                 <div className="bg-muted/50 rounded-xl p-3 text-xs text-muted-foreground">
                                     <p className="font-medium text-foreground mb-1">AI Draft Reply:</p>
                                     <p>
-                                        "Hi! I have checked on your order and it is currently in transit. Expected
-                                        delivery is tomorrow. Would you like the tracking link?"
+                                        &quot;Hi! I have checked on your order and it is currently in transit. Expected
+                                        delivery is tomorrow. Would you like the tracking link?&quot;
                                     </p>
+
                                 </div>
                             </motion.div>
                         )}

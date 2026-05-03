@@ -10,6 +10,9 @@
   --clay: #2d241f;
   --clay-foreground: #ffffff;
 
+  --midnight: #1a212c;
+  --midnight-foreground: #f5e6e0;
+
   --peach-soft: #f5e6e0;
   --peach-foreground: #4a3728;
 
@@ -60,7 +63,10 @@
   --color-primary-foreground: var(--primary-foreground);
 
   --color-clay: var(--clay);
-  --color-clay-foreground: var(--clay-foreground);
+  --color-clay-foreground: var(--color-clay-foreground);
+
+  --color-midnight: var(--midnight);
+  --color-midnight-foreground: var(--midnight-foreground);
 
   --color-peach-soft: var(--peach-soft);
   --color-peach-foreground: var(--peach-foreground);

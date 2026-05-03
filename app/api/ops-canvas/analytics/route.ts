@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/firebase-admin";
+import { requireAuth } from "@/lib/auth";
+
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { ReviewTicket, AnalyticsPayload } from "@/types";
 
@@ -123,7 +124,8 @@ export async function GET() {
         };
 
         return NextResponse.json(payload);
-    } catch (error) {
+    } catch {
+
         return NextResponse.json(
             { error: "Authentication required" },
             { status: 401 }

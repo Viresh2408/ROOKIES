@@ -15,35 +15,45 @@ import { toast } from "sonner";
 
 export type InventoryItem = {
     id: string;
-    item_name: string;
+    name: string;
+    sku: string | null;
     quantity: number;
     unit: string | null;
-    minimum_stock: number | null;
+    low_stock_at: number | null;
+    cost_price: number | null;
+    sell_price: number | null;
 };
 
 type InventoryFormState = {
-    item_name: string;
+    name: string;
+    sku: string;
     quantity: string;
     unit: string;
-    minimum_stock: string;
+    low_stock_at: string;
+    cost_price: string;
+    sell_price: string;
 };
 
 interface InventoryFormModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     initialData?: InventoryItem | null;
-    onSaved?: () => void;
+    onSaved?: (item: InventoryItem) => void;
+    businessId: string | null;
 }
 
-const INVENTORY_TABLE = "inventory";
+const INVENTORY_TABLE = "inventory_items";
 
-const unitOptions = ["kg", "grams", "boxes", "pieces", "units"] as const;
+const unitOptions = ["kg", "grams", "boxes", "pieces", "units", "liters"] as const;
 
 const emptyForm: InventoryFormState = {
-    item_name: "",
+    name: "",
+    sku: "",
     quantity: "",
     unit: "units",
-    minimum_stock: "",
+    low_stock_at: "",
+    cost_price: "",
+    sell_price: "",
 };
 
 export function InventoryFormModal({
@@ -51,6 +61,7 @@ export function InventoryFormModal({
     onOpenChange,
     initialData,
     onSaved,
+    businessId,
 }: InventoryFormModalProps) {
     const supabase = useMemo(() => createClient(), []);
     const [formState, setFormState] = useState<InventoryFormState>(emptyForm);
@@ -62,15 +73,24 @@ export function InventoryFormModal({
         if (!open) return;
         if (initialData) {
             setFormState({
-                item_name: initialData.item_name ?? "",
+                name: initialData.name ?? "",
+                sku: initialData.sku ?? "",
                 quantity:
                     initialData.quantity !== null && initialData.quantity !== undefined
                         ? String(initialData.quantity)
                         : "",
                 unit: initialData.unit ?? "units",
-                minimum_stock:
-                    initialData.minimum_stock !== null && initialData.minimum_stock !== undefined
-                        ? String(initialData.minimum_stock)
+                low_stock_at:
+                    initialData.low_stock_at !== null && initialData.low_stock_at !== undefined
+                        ? String(initialData.low_stock_at)
+                        : "",
+                cost_price:
+                    initialData.cost_price !== null && initialData.cost_price !== undefined
+                        ? String(initialData.cost_price)
+                        : "",
+                sell_price:
+                    initialData.sell_price !== null && initialData.sell_price !== undefined
+                        ? String(initialData.sell_price)
                         : "",
             });
         } else {
@@ -87,8 +107,13 @@ export function InventoryFormModal({
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        if (!formState.item_name.trim()) {
+        if (!formState.name.trim()) {
             toast.error("Item name is required");
+            return;
+        }
+
+        if (!businessId) {
+            toast.error("Business ID is missing. Please refresh.");
             return;
         }
 
@@ -98,29 +123,47 @@ export function InventoryFormModal({
             return;
         }
 
-        const minimumStockValue = formState.minimum_stock
-            ? Number(formState.minimum_stock)
+        const lowStockValue = formState.low_stock_at
+            ? Number(formState.low_stock_at)
             : null;
 
-        if (formState.minimum_stock && Number.isNaN(minimumStockValue)) {
-            toast.error("Minimum stock must be a number");
-            return;
-        }
+        const costPriceValue = formState.cost_price
+            ? Number(formState.cost_price)
+            : null;
+
+        const sellPriceValue = formState.sell_price
+            ? Number(formState.sell_price)
+            : null;
 
         setSaving(true);
-        const payload = {
-            item_name: formState.item_name.trim(),
+        const payload: any = {
+            business_id: businessId,
+            name: formState.name.trim(),
+            sku: formState.sku.trim() || null,
             quantity: quantityValue,
             unit: formState.unit || null,
-            minimum_stock: minimumStockValue,
+            low_stock_at: lowStockValue,
+            cost_price: costPriceValue,
+            sell_price: sellPriceValue,
+            updated_at: new Date().toISOString(),
         };
+
+        // If creating new, generate a UUID on client side to ensure it's never null
+        if (!isEdit) {
+            payload.id = crypto.randomUUID();
+            payload.created_at = new Date().toISOString();
+        }
 
         try {
             const query = isEdit
-                ? supabase.from(INVENTORY_TABLE).update(payload).eq("id", initialData?.id ?? "")
+                ? supabase
+                      .from(INVENTORY_TABLE)
+                      .update(payload)
+                      .eq("id", initialData?.id ?? "")
+                      .eq("business_id", businessId)
                 : supabase.from(INVENTORY_TABLE).insert([payload]);
 
-            const { error } = await query;
+            const { data, error } = await query.select().single();
             if (error) {
                 toast.error(error.message || "Failed to save item");
                 return;
@@ -128,8 +171,8 @@ export function InventoryFormModal({
 
             toast.success(isEdit ? "Inventory item updated" : "Inventory item created");
             onOpenChange(false);
-            onSaved?.();
-        } catch (_err) {
+            onSaved?.(data as InventoryItem);
+        } catch {
             toast.error("Something went wrong while saving");
         } finally {
             setSaving(false);
@@ -138,7 +181,7 @@ export function InventoryFormModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
+            <DialogContent className="max-w-md">
                 <DialogClose onClick={() => onOpenChange(false)} />
                 <DialogHeader>
                     <DialogTitle>{isEdit ? "Edit Item" : "Create Item"}</DialogTitle>
@@ -154,10 +197,22 @@ export function InventoryFormModal({
                         <label className="text-sm font-medium text-foreground">Item Name</label>
                         <input
                             type="text"
-                            value={formState.item_name}
-                            onChange={(event) => updateField("item_name", event.target.value)}
+                            required
+                            value={formState.name}
+                            onChange={(event) => updateField("name", event.target.value)}
                             className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                             placeholder="Premium Packaging Boxes"
+                        />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-foreground">SKU / Code</label>
+                        <input
+                            type="text"
+                            value={formState.sku}
+                            onChange={(event) => updateField("sku", event.target.value)}
+                            className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+                            placeholder="PK-001"
                         />
                     </div>
 
@@ -166,6 +221,7 @@ export function InventoryFormModal({
                             <label className="text-sm font-medium text-foreground">Quantity</label>
                             <input
                                 type="number"
+                                required
                                 value={formState.quantity}
                                 onChange={(event) => updateField("quantity", event.target.value)}
                                 className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
@@ -190,19 +246,45 @@ export function InventoryFormModal({
                         </div>
                     </div>
 
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-foreground">Cost Price (₹)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={formState.cost_price}
+                                onChange={(event) => updateField("cost_price", event.target.value)}
+                                className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+                                placeholder="10.50"
+                            />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-foreground">Sell Price (₹)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={formState.sell_price}
+                                onChange={(event) => updateField("sell_price", event.target.value)}
+                                className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+                                placeholder="15.00"
+                            />
+                        </div>
+                    </div>
+
                     <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-foreground">Minimum Stock</label>
+                        <label className="text-sm font-medium text-foreground">Low Stock Alert at</label>
                         <input
                             type="number"
-                            value={formState.minimum_stock}
-                            onChange={(event) => updateField("minimum_stock", event.target.value)}
+                            value={formState.low_stock_at}
+                            onChange={(event) => updateField("low_stock_at", event.target.value)}
                             className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                             placeholder="10"
                             min="0"
                         />
                     </div>
 
-                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end pt-2">
                         <Button
                             type="button"
                             variant="ghost"
@@ -210,8 +292,8 @@ export function InventoryFormModal({
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" isLoading={saving}>
-                            {isEdit ? "Save Changes" : "Create Item"}
+                        <Button type="submit" disabled={saving}>
+                            {saving ? "Saving..." : isEdit ? "Save Changes" : "Create Item"}
                         </Button>
                     </div>
                 </form>

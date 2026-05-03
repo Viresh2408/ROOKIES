@@ -14,7 +14,6 @@ import {
     CheckCircle2,
     AlertTriangle,
     TrendingUp,
-    BarChart3,
 } from "lucide-react";
 import {
     AreaChart,
@@ -55,7 +54,7 @@ export default function AnalyticsPage() {
                     throw new Error(payload?.error || "Failed to load analytics");
                 }
                 setData(payload);
-            } catch (error) {
+            } catch {
                 toast.error("Unable to load analytics");
             }
         };

@@ -13,20 +13,23 @@ export const metadata: Metadata = {
 };
 
 type PageProps = {
-    params: { id: string };
-    searchParams?: { invoiceUrl?: string | string[] };
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ invoiceUrl?: string | string[] }>;
 };
 
 export default async function InvoicePage({ params, searchParams }: PageProps) {
+    const resolvedParams = await params;
+    const resolvedSearchParams = await searchParams;
+
     const normalizeInvoiceUrl = (value: string | null | undefined) => {
         const trimmed = value?.trim();
         return trimmed ? trimmed : null;
     };
 
     const queryInvoiceUrl = normalizeInvoiceUrl(
-        typeof searchParams?.invoiceUrl === "string" ? searchParams.invoiceUrl : null
+        typeof resolvedSearchParams?.invoiceUrl === "string" ? resolvedSearchParams.invoiceUrl : null
     );
-    const orderId = params.id;
+    const orderId = resolvedParams.id;
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId);
 
     const renderPdfOnly = (pdfUrl: string) => (
@@ -90,7 +93,7 @@ export default async function InvoicePage({ params, searchParams }: PageProps) {
     let { data: order, error } = await supabase
         .from("orders")
         .select(invoiceSelect)
-        .eq("id", params.id)
+        .eq("id", resolvedParams.id)
         .single();
 
     if (error?.code === "42703") {
@@ -98,7 +101,7 @@ export default async function InvoicePage({ params, searchParams }: PageProps) {
         const fallback = await supabase
             .from("orders")
             .select(baseSelect)
-            .eq("id", params.id)
+            .eq("id", resolvedParams.id)
             .single();
         error = fallback.error;
         if (fallback.data) {

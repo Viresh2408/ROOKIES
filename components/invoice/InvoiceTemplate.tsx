@@ -77,18 +77,22 @@ export function InvoiceTemplate({
             </div>
 
             <div className="mt-6 rounded-xl border border-border bg-muted/10 p-4">
-                <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    <span>Item</span>
-                    <span>Qty</span>
+                <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground border-b border-border pb-2">
+                    <span className="flex-[2]">Item</span>
+                    <span className="flex-1 text-center">Qty</span>
+                    <span className="flex-1 text-right">Price</span>
+                    <span className="flex-1 text-right">Total</span>
                 </div>
                 <div className="mt-3 space-y-2">
                     {items.length === 0 ? (
                         <p className="text-sm text-muted-foreground">No item details available.</p>
                     ) : (
                         items.map((item, index) => (
-                            <div key={`${item.name}-${index}`} className="flex items-center justify-between text-sm">
-                                <span className="text-foreground">{item.name}</span>
-                                <span className="text-muted-foreground">{item.quantity}</span>
+                            <div key={`${item.name}-${index}`} className="flex items-center justify-between text-sm py-1">
+                                <span className="flex-[2] text-foreground font-medium">{item.name}</span>
+                                <span className="flex-1 text-center text-muted-foreground">{item.quantity}</span>
+                                <span className="flex-1 text-right text-muted-foreground">₹{(item.price || 0).toFixed(2)}</span>
+                                <span className="flex-1 text-right text-foreground font-semibold">₹{((item.price || 0) * item.quantity).toFixed(2)}</span>
                             </div>
                         ))
                     )}

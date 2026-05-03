@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/firebase-admin";
+import { requireAuth } from "@/lib/auth";
+
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const TABLE_NAME = "ops_canvas_workflows";
@@ -24,7 +25,8 @@ export async function GET() {
         }
 
         return NextResponse.json({ workflow: data?.[0] ?? null });
-    } catch (error) {
+    } catch {
+
         return NextResponse.json(
             { error: "Authentication required" },
             { status: 401 }
@@ -79,7 +81,8 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json({ workflow: data });
-    } catch (error) {
+    } catch {
+
         return NextResponse.json(
             { error: "Authentication required" },
             { status: 401 }

@@ -1,13 +1,15 @@
 export type InvoiceLineItem = {
     name: string;
     quantity: number;
+    price?: number;
 };
 
 export function buildInvoiceItems(items: unknown, note: string | null): InvoiceLineItem[] {
     if (Array.isArray(items)) {
-        return items.map((item: { name?: string; quantity?: number; qty?: number }) => ({
+        return items.map((item: { name?: string; quantity?: number; qty?: number; price?: number; amount?: number }) => ({
             name: item.name ?? "Item",
             quantity: item.quantity ?? item.qty ?? 1,
+            price: item.price ?? item.amount ?? 0,
         }));
     }
 

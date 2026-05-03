@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/firebase-admin";
+import { requireAuth } from "@/lib/auth";
+
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { TicketSentiment, TicketSource, TicketStatus, TicketUrgency } from "@/types";
 
@@ -24,7 +25,8 @@ export async function GET() {
         }
 
         return NextResponse.json({ tickets: data ?? [] });
-    } catch (error) {
+    } catch {
+
         return NextResponse.json(
             { error: "Authentication required" },
             { status: 401 }
@@ -74,7 +76,8 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json({ ticket: data });
-    } catch (error) {
+    } catch {
+
         return NextResponse.json(
             { error: "Authentication required" },
             { status: 401 }

@@ -67,7 +67,8 @@ export function DeliveryCard({ order }: { order: DeliveryOrder }) {
                 toast.success("Delivery started");
                 router.refresh();
             }
-        } catch (error) {
+        } catch {
+
             toast.error("Unable to start delivery");
         } finally {
             setStartLoading(false);

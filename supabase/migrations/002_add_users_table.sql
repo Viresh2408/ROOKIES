@@ -1,12 +1,11 @@
--- ============================================
--- Rookies - Add Users Table for Firebase Auth
+-- Rookies - Add Users Table for Clerk Auth
 -- Run this in Supabase SQL Editor
 -- ============================================
 
--- ─── Users (Firebase Auth identity records) ───
+-- ─── Users (Clerk Auth identity records) ───
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  firebase_uid TEXT UNIQUE NOT NULL,
+  clerk_id TEXT UNIQUE NOT NULL,
   email TEXT,
   name TEXT,
   phone TEXT,
@@ -14,5 +13,6 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Index for fast Firebase UID lookups
-CREATE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid);
+-- Index for fast Clerk ID lookups
+CREATE INDEX IF NOT EXISTS idx_users_clerk_id ON users(clerk_id);
+

@@ -41,7 +41,8 @@ export function OTPModal({ open, onOpenChange, orderId, onVerified }: OTPModalPr
                 onVerified();
                 onOpenChange(false);
             }
-        } catch (error) {
+        } catch {
+
             toast.error("Something went wrong");
         } finally {
             setSubmitting(false);

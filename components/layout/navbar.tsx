@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
+import { auth } from "@clerk/nextjs/server";
+import { UserButton } from "@clerk/nextjs";
 
 export async function Navbar() {
-    const cookieStore = await cookies();
-    const hasSession = !!cookieStore.get("__session")?.value;
+    const { userId } = await auth();
 
     return (
         <nav className="fixed top-0 w-full z-50 border-b border-primary/10 glass-nav">
@@ -39,15 +39,7 @@ export async function Navbar() {
 
                 {/* Auth */}
                 <div className="flex items-center gap-4">
-                    {hasSession ? (
-                        <>
-                            <Link href="/dashboard">
-                                <button className="text-sm font-semibold px-4 py-2 hover:text-primary transition-colors">
-                                    Dashboard
-                                </button>
-                            </Link>
-                        </>
-                    ) : (
+                    {!userId ? (
                         <>
                             <Link href="/sign-in">
                                 <button className="text-sm font-semibold px-4 py-2 hover:text-primary transition-colors">
@@ -59,6 +51,15 @@ export async function Navbar() {
                                     Get Started Free
                                 </button>
                             </Link>
+                        </>
+                    ) : (
+                        <>
+                            <Link href="/dashboard">
+                                <button className="text-sm font-semibold px-4 py-2 hover:text-primary transition-colors mr-2">
+                                    Dashboard
+                                </button>
+                            </Link>
+                            <UserButton />
                         </>
                     )}
                 </div>

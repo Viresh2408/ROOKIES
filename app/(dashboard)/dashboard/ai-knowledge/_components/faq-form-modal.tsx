@@ -95,7 +95,8 @@ export function FaqFormModal({
             toast.success(isEdit ? "FAQ updated" : "FAQ created");
             onOpenChange(false);
             onSaved?.();
-        } catch (_err) {
+        } catch {
+
             toast.error("Something went wrong while saving");
         } finally {
             setSaving(false);

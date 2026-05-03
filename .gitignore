@@ -49,3 +49,6 @@ prisma/*.db-journal
 
 # supabase
 .supabase/
+
+# scratch
+scratch/

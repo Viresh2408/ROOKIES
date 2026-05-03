@@ -98,8 +98,10 @@ export default function MenuManagerPage() {
     }, [supabase]);
 
     useEffect(() => {
-        loadMenuItems();
+        const timer = setTimeout(() => loadMenuItems(), 0);
+        return () => clearTimeout(timer);
     }, [loadMenuItems]);
+
 
     function handleCreate() {
         setActiveItem(null);

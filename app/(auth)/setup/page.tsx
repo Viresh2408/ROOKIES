@@ -12,6 +12,7 @@ import { Step3Channels } from "./_components/step-3";
 import { Step4Preferences } from "./_components/step-4";
 import { SetupComplete } from "./_components/setup-complete";
 import type { Step1Data, Step2Data, Step3Data, Step4Data, BusinessSetupData } from "./schema";
+import { createBusiness } from "./actions";
 
 const TOTAL_STEPS = 4;
 
@@ -42,11 +43,17 @@ export default function BusinessSetupPage() {
         setFormData(finalData);
 
         try {
-            // TODO: Save to database via server action
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            await createBusiness({
+                name: finalData.businessName,
+                type: finalData.businessType,
+                city: finalData.city,
+                whatsapp: finalData.whatsapp,
+                language: finalData.language,
+            });
             setIsComplete(true);
-        } catch {
-            toast.error("Something went wrong. Please try again.");
+        } catch (err: any) {
+            console.error("Setup failed:", err);
+            toast.error(err.message || "Something went wrong. Please try again.");
         } finally {
             setIsSubmitting(false);
         }

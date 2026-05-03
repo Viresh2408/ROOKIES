@@ -120,7 +120,8 @@ export function MenuFormModal({
             toast.success(isEdit ? "Menu item updated" : "Menu item created");
             onOpenChange(false);
             onSaved?.();
-        } catch (_err) {
+        } catch {
+
             toast.error("Something went wrong while saving");
         } finally {
             setSaving(false);

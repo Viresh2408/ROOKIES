@@ -20,24 +20,30 @@ interface InventoryImportModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onImported?: () => void;
+    businessId: string | null;
 }
 
 type ParsedInventoryItem = {
-    item_name: string;
+    id: string;
+    business_id: string;
+    name: string;
     quantity: number;
     unit: string | null;
-    minimum_stock: number | null;
+    low_stock_at: number | null;
+    created_at: string;
+    updated_at: string;
 };
 
 type ImportStep = "upload" | "review" | "importing" | "success";
 
-const INVENTORY_TABLE = "inventory";
-const REQUIRED_HEADERS = ["item_name", "quantity", "unit", "minimum_stock"] as const;
+const INVENTORY_TABLE = "inventory_items";
+const REQUIRED_HEADERS = ["name", "quantity", "unit", "low_stock_at"] as const;
 
 export function InventoryImportModal({
     open,
     onOpenChange,
     onImported,
+    businessId,
 }: InventoryImportModalProps) {
     const supabase = useMemo(() => createClient(), []);
     const [step, setStep] = useState<ImportStep>("upload");
@@ -49,15 +55,23 @@ export function InventoryImportModal({
 
     useEffect(() => {
         if (!open) {
-            setStep("upload");
-            setItems([]);
-            setParseError(null);
-            setRejectedCount(0);
-            setIsDragging(false);
+            const timer = setTimeout(() => {
+                setStep("upload");
+                setItems([]);
+                setParseError(null);
+                setRejectedCount(0);
+                setIsDragging(false);
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [open]);
 
     function handleFileSelect(file: File) {
+        if (!businessId) {
+            toast.error("Business ID is missing. Please refresh.");
+            return;
+        }
+
         setParseError(null);
         setRejectedCount(0);
         Papa.parse(file, {
@@ -77,25 +91,29 @@ export function InventoryImportModal({
                 let rejected = 0;
 
                 rows.forEach((row) => {
-                    const itemName = row.item_name?.trim();
+                    const name = row.name?.trim();
                     const quantity = Number(row.quantity);
-                    const minimumStock = row.minimum_stock ? Number(row.minimum_stock) : null;
+                    const lowStockAt = row.low_stock_at ? Number(row.low_stock_at) : null;
 
-                    if (!itemName || Number.isNaN(quantity)) {
+                    if (!name || Number.isNaN(quantity)) {
                         rejected += 1;
                         return;
                     }
 
-                    if (row.minimum_stock && Number.isNaN(minimumStock)) {
+                    if (row.low_stock_at && Number.isNaN(lowStockAt)) {
                         rejected += 1;
                         return;
                     }
 
                     validRows.push({
-                        item_name: itemName,
+                        id: crypto.randomUUID(),
+                        business_id: businessId,
+                        name: name,
                         quantity,
                         unit: row.unit?.trim() || null,
-                        minimum_stock: minimumStock,
+                        low_stock_at: lowStockAt,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
                     });
                 });
 
@@ -180,7 +198,7 @@ export function InventoryImportModal({
                                     Drop your CSV here or click to browse
                                 </p>
                                 <p className="text-xs text-slate-600 mt-1">
-                                    Expected headers: item_name, quantity, unit, minimum_stock
+                                    Expected headers: name, quantity, unit, low_stock_at
                                 </p>
                             </div>
                             <input
