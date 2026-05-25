@@ -224,7 +224,7 @@ Rookies utilizes a multi-tenant PostgreSQL architecture where every transactiona
 - [x] Conversational item-adding flow (`add_inventory` tool) with field-skipping.
 - [x] LiveKit bidirectional dashboard navigation sync.
 - [x] Custom context-trimming to eliminate rate-limiting latency.
-- [ ] WhatsApp Automated Messaging integration (using n8n webhook workflow).
+- [x] **WhatsApp Automated Messaging integration (using n8n webhook workflow)** <span style="color:#10b981; background-color:#ecfdf5; border:1px solid #a7f3d0; padding:2px 8px; border-radius:12px; font-size:0.8em; font-weight:bold; margin-left:8px;">Completed</span>
 - [ ] Direct offline backup sync and automatic inventory alerts to WhatsApp.
 - [ ] Indian regional language support (Hindi, Marathi, Kannada) in the Voice STT/TTS pipeline.
 
