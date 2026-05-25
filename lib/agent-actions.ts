@@ -52,9 +52,12 @@ export async function getInventoryItems(businessId: string, filter: 'low' | 'all
   return items.map(i => ({
     id: i.id,
     name: i.name,
+    sku: i.sku ?? null,
     quantity: i.quantity,
     unit: i.unit,
-    price: Number(i.sellPrice) || 0
+    costPrice: Number(i.costPrice) || 0,
+    price: Number(i.sellPrice) || 0,
+    lowStockAt: i.lowStockAt ?? null,
   }));
 }
 
@@ -153,9 +156,12 @@ export async function createInventoryItem(businessId: string, data: any) {
     data: {
       businessId,
       name: data.name,
-      sellPrice: new Prisma.Decimal(data.price),
-      quantity: data.stock,
-      unit: data.unit,
+      sku: data.sku ?? null,
+      sellPrice: data.price != null ? new Prisma.Decimal(data.price) : null,
+      costPrice: data.costPrice != null ? new Prisma.Decimal(data.costPrice) : null,
+      quantity: data.stock ?? 0,
+      unit: data.unit ?? 'units',
+      lowStockAt: data.lowStockAt ?? null,
     }
   });
 }

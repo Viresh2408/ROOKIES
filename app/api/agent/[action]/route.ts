@@ -38,7 +38,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ action:
     console.log(`[api/agent/${action}] result length:`, Array.isArray(result) ? result.length : 'N/A');
     return NextResponse.json(result);
   } catch (error) {
-    console.error(`[agent/${params.action}] error:`, error);
+    console.error(`[agent/${(await params).action}] error:`, error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

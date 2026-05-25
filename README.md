@@ -1,320 +1,234 @@
-# Rookies — Virtual COO for Indian Small Businesses
+# 🍊 Rookies — Virtual COO for Indian Small Businesses
 
-> **Live:** [rookies-apsit.vercel.app](https://rookies-apsit.vercel.app)
+[![Live](https://img.shields.io/badge/Live-rookies--apsit.vercel.app-orange?style=for-the-badge&logo=vercel)](https://rookies-apsit.vercel.app)
+[![Tech Stack](https://img.shields.io/badge/Stack-Next.js%2016%20%7C%20Supabase%20%7C%20LiveKit-orange?style=for-the-badge)](https://nextjs.org)
+[![License](https://img.shields.io/badge/License-Private-red?style=for-the-badge)](LICENSE)
 
-A WhatsApp-first AI SaaS platform built with **Next.js 16**, **Clerk**, **Supabase**, **Prisma**, and **TailwindCSS v4**.
+**Rookies** is a WhatsApp-first AI SaaS platform and Virtual COO designed for home bakers, kirana stores, Instagram-first brands, and other micro-merchants across India. It empowers them to manage orders, payments, customers, and inventory seamlessly—all from one calm, human-friendly dashboard or via a **real-time AI Voice Assistant**.
 
-Designed for home bakers, kirana stores, Instagram-first brands, and other Indian small businesses to manage orders, payments, inventory, and customer relationships — all from one calm, human-friendly dashboard.
+Built with **Next.js 16.1 (App Router)**, **React 19**, **TailwindCSS v4**, **Clerk Auth**, **Supabase (PostgreSQL with RLS)**, and **Prisma ORM**.
 
 ---
 
-## Tech Stack
+## 🚀 Key Highlights & Recent Major Upgrades
+
+We have recently integrated a state-of-the-art **Real-Time AI Voice Agent** powered by **LiveKit Agents**, enabling hands-free, high-performance voice-driven business operations. 
+
+```
+                               ┌──────────────────────────┐
+                               │     Next.js Web App      │
+                               │  (React 19 / Tailwind 4) │
+                               └────────────┬─────────────┘
+                                            │
+                                            │ LiveKit Data Channel
+                                            │ (Real-time Navigation & Sync)
+                                            ▼
+┌──────────────┐   Voice IP    ┌──────────────────────────┐   API Requests   ┌─────────────────┐
+│ User Audio   ├──────────────►│    LiveKit Voice Agent   ├─────────────────►│   Supabase DB   │
+│ (Vocal commands)             │ (VAD / Groq STT / LLM)   │  (Secured JSON)  │  (Prisma ORM)   │
+└──────────────┘               └────────────┬─────────────┘                  └─────────────────┘
+                                            │
+                                            │ Godmode TTS Audio
+                                            ▼
+                               ┌──────────────────────────┐
+                               │       Deepgram TTS       │
+                               │  (Direct Audio Playback) │
+                               └──────────────────────────┘
+```
+
+### 🎙️ 1. Ultra-Low Latency Voice Agent (`agent/main.py`)
+- **LiveKit Agents SDK 0.12.x**: Fully asynchronous voice agent loop that handles connection state, voice activity detection, and streaming speech-to-text / text-to-speech.
+- **State-of-the-Art AI Services**:
+  - **STT**: Groq `whisper-large-v3-turbo` for near-instant, high-accuracy speech transcription.
+  - **LLM**: Groq `llama-3.1-8b-instant` orchestrating conversational logic, entity extraction, and function calling.
+  - **TTS**: Deepgram `aura-asteria-en` for natural-sounding, ultra-low latency audio syntheses.
+- **"Godmode" Direct TTS Playback**: To completely bypass the LLM's latency and token regeneration cost when reading long product catalogs, the agent caches the inventory lists and uses direct TTS streaming (`assistant.say()`) to read the items to the user in real time.
+- **Intelligent Context Trimming**: Automatically prunes conversation turns on every final transcript to a maximum sliding window of the last 6 messages. This minimizes the token footprint, dramatically accelerating responses and eliminating rate limit issues.
+
+### 🌐 2. Bidirectional Dashboard Sync (`components/VoiceAgent.tsx`)
+- **Real-Time Client Navigation**: The Voice Agent sends low-latency JSON navigation events (`{"type": "navigation", "path": "/dashboard/inventory"}`) over LiveKit data channels.
+- **Instant Client Hydration**: The browser-side component parses these navigation packets, programmatically updates routes via `router.push()`, and triggers `router.refresh()` so that newly modified orders, customers, or items immediately render in server-side components.
+
+### 📦 3. Conversational Multi-Step Inventory Onboarding
+- **Smart Conversational Flow**: A highly robust `add_inventory` tool prompts the user for one item attribute at a time (Name → SKU → Stock Quantity → Unit → Cost Price → Sell Price → Low Stock alert level).
+- **Duplicate Prevention Safeguard**: Interrogates the active database API for matching item names prior to creation to prevent duplicate menu records and alert the user dynamically.
+- **Schema & Server Action Expansion**: Updated Prisma schema and backend queries in `lib/agent-actions.ts` to fully support `sku`, `costPrice`, and `lowStockAt` throughout the database lifecycle.
+
+---
+
+## 🛠️ Complete Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 16.1.6 (App Router, RSC, Turbopack) |
-| Language | TypeScript 5 |
-| Styling | TailwindCSS v4 (warm minimal theme) |
-| Components | Custom (ShadCN-style) + Lucide Icons |
-| Auth | Clerk (`@clerk/nextjs`) |
-| Database | Supabase (PostgreSQL with RLS) |
-| ORM | Prisma 7 |
-| Validation | Zod v4 + React Hook Form |
-| Animations | Framer Motion |
-| Toasts | Sonner |
-| Webhooks | n8n → Supabase |
-| Deployment | Vercel + Supabase (free tiers) |
+| :--- | :--- |
+| **Frontend Framework** | Next.js 16.1.6 (App Router, Server Components, Turbopack) |
+| **User Interface** | React 19.0.0 (Server & Client Components) |
+| **Voice Agent Framework** | LiveKit Agents SDK 0.12.x (Python-based asynchronous server) |
+| **AI Models (Voice)** | Groq Whispering/Llama-3.1 + Deepgram Aura |
+| **Styling** | TailwindCSS v4.0 (Custom warm minimal palette) |
+| **Database** | Supabase (PostgreSQL with Row Level Security) |
+| **ORM** | Prisma 7.0 (Relational schema with 10 tables) |
+| **Authentication** | Clerk (`@clerk/nextjs` SDK) |
+| **State & Forms** | React Hook Form + Zod v4 validation |
+| **Transitions & Toasts**| Framer Motion + Sonner |
 
 ---
 
-## Features
+## 📂 Project Directory Structure
 
-- **Landing Page** — Warm, conversion-focused marketing page with navbar, hero, features, and CTA sections
-- **Clerk Authentication** — Sign in / Sign up with Clerk's hosted UI, `UserButton` in dashboard, middleware protection via `clerkMiddleware()`
-- **Business DNA Setup** — 4-step animated onboarding flow (`/setup`) with Framer Motion transitions:
-  1. Business basics (name, type, city)
-  2. Operational details (team size, daily orders, revenue)
-  3. Pain points & goals selection
-  4. WhatsApp number + preferred language
-- **Dashboard** — Sidebar navigation with overview stats, orders, customers, payments, inventory, WhatsApp, and settings sections
-- **Orders Screen** — Card-based order display fetched from Supabase with:
-  - Customer name & phone
-  - Items list (parsed from notes — JSON or plain text)
-  - Total in INR (₹)
-  - Status badge (Pending / Delivered)
-  - Payment badge (Paid / Unpaid)
-  - Source badge (WhatsApp)
-  - "Mark as Delivered" CTA
-  - Friendly empty state
-- **n8n Webhook** — `POST /api/webhooks/n8n` receives order data from WhatsApp automation workflows
-- **Multi-Tenant Architecture** — All data scoped to `business_id` with Row Level Security
+```
+├── agent/                          # Real-Time AI Voice Agent Services
+│   └── main.py                     # Asynchronous LiveKit Voice Agent & LLM tools
+├── app/                            # Next.js App Router (React 19)
+│   ├── layout.tsx                  # Base layout wrapping Clerk & Toaster providers
+│   ├── globals.css                 # TailwindCSS v4 styling & color definitions
+│   ├── (marketing)/                # Public landing pages
+│   ├── (auth)/                     # Clerk sign-in / sign-up and onboarding setup flow
+│   ├── (dashboard)/                # Protected business owner dashboards
+│   │   ├── dashboard/              # Overview stats cards & real-time analytics
+│   │   └── dashboard/orders/       # Live order feeds and action components
+│   ├── api/
+│   │   ├── agent/[action]/route.ts # Next.js API route servicing agent requests (React 19 sync params fixed)
+│   │   └── webhooks/n8n/route.ts   # n8n webhook receiver endpoint
+│   └── auth/callback/route.ts      # Auth route callback handlers
+├── components/                     # Shared UI Components
+│   ├── VoiceAgent.tsx              # LiveKit Voice widget with real-time route listeners
+│   └── ui/                         # Base ShadCN-style visual nodes (Buttons, Cards, Dialogs)
+├── lib/                            # Helper utilities & client constructors
+│   ├── agent-actions.ts            # Server actions performing DB writes for the voice assistant
+│   ├── auth.ts                     # Authentication hooks
+│   └── utils.ts                    # Formatter modules (INR currency, string cleanups)
+├── prisma/                         # Prisma database schema definition
+│   └── schema.prisma               # Complete multi-tenant tables (10 models)
+├── supabase/                       # Supabase configuration & RLS migrations
+│   └── migrations/                 # PostgreSQL migrations initializing multi-tenant RLS
+└── package.json                    # Package manifest & configuration scripts
+```
 
 ---
 
-## Getting Started
+## ⚡ Development & Setup Instructions
 
-### Prerequisites
+Follow these steps to run both the Next.js web application and the Python LiveKit voice agent locally.
 
-- **Node.js** 18.18+ (recommended: 20+)
-- **npm** 9+
+### 📋 Prerequisites
+- **Node.js** 18.18+ (20+ recommended)
+- **Python** 3.10+
 - A **Clerk** account ([clerk.com](https://clerk.com))
-- A **Supabase** account ([supabase.com](https://supabase.com))
+- A **Supabase** database ([supabase.com](https://supabase.com))
+- **LiveKit** sandbox credentials and **Groq** & **Deepgram** API keys
 
-### 1. Clone & Install
+---
 
+### Step 1: Clone the Repository & Install Web Dependencies
 ```bash
-git clone https://github.com/vinayak1497/Rookies.git
-cd Rookies
+git clone https://github.com/Viresh2408/ROOKIES.git
+cd ROOKIES/Rookies
 npm install
 ```
 
-### 2. Set Up Clerk
-
-1. Go to [dashboard.clerk.com](https://dashboard.clerk.com) and create a new application
-2. Copy your **Publishable Key** and **Secret Key** from the API Keys page
-
-### 3. Set Up Supabase
-
-1. Go to [supabase.com/dashboard](https://supabase.com/dashboard) and create a new project
-2. Go to **Settings → API** and copy:
-   - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
-   - Anon public key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - Service role key → `SUPABASE_SERVICE_ROLE_KEY`
-3. Go to **Settings → Database** and copy the connection string → `DATABASE_URL`
-4. Go to **SQL Editor** and run the contents of `supabase/migrations/001_initial_schema.sql`
-
-### 4. Configure Environment
-
-Create `.env.local` in the project root:
-
-```bash
-# ─── Clerk ───
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
-CLERK_SECRET_KEY=YOUR_SECRET_KEY
-
+### Step 2: Configure Web Environment Variables
+Create a `.env.local` file in the `Rookies` folder:
+```env
+# ─── Clerk Authentication ───
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
 NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/setup
 
-# ─── Supabase ───
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+# ─── Supabase PostgreSQL Connection ───
+NEXT_PUBLIC_SUPABASE_URL=https://your-supabase-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=ey...
+SUPABASE_SERVICE_ROLE_KEY=ey...
+DATABASE_URL=postgresql://postgres.your-project-id:...@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true
 
-# ─── Database (Prisma) ───
-DATABASE_URL=postgresql://<user>:<password>@<project>.pooler.supabase.com:6543/postgres
-
-# ─── App ───
+# ─── Application URL ───
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# ─── LiveKit Agent API Shared Secret ───
+ROOKIES_API_URL=http://localhost:3000/api/agent
+ROOKIES_AGENT_SECRET=your_secure_agent_secret
 ```
 
-### 5. Run Locally
-
+### Step 3: Run Database Migrations & Start Next.js Development Server
 ```bash
+# Push schema changes to Supabase
+npx prisma db push
+
+# Start web application
 npm run dev
 ```
-
-Open [http://localhost:3000](http://localhost:3000).
-
----
-
-## Project Structure
-
-```
-├── app/
-│   ├── layout.tsx                  # Root layout (ClerkProvider, fonts, Toaster)
-│   ├── globals.css                 # TailwindCSS v4 theme (warm orange palette)
-│   ├── (marketing)/                # Landing page (public)
-│   │   ├── layout.tsx              # Navbar + Footer
-│   │   └── page.tsx                # Hero + Features + CTA
-│   ├── (auth)/                     # Auth pages
-│   │   ├── layout.tsx              # Centered card layout with logo
-│   │   ├── sign-in/
-│   │   │   └── [[...sign-in]]/page.tsx   # Clerk <SignIn /> component
-│   │   ├── sign-up/
-│   │   │   └── [[...sign-up]]/page.tsx   # Clerk <SignUp /> component
-│   │   └── setup/                  # Business DNA onboarding (4 steps)
-│   │       ├── page.tsx            # Orchestrator with AnimatePresence
-│   │       ├── schema.ts           # Zod validation + constants
-│   │       └── _components/        # Step forms + shared UI
-│   ├── (dashboard)/                # Protected dashboard
-│   │   ├── layout.tsx              # Sidebar + Topbar + Clerk UserButton
-│   │   └── dashboard/
-│   │       ├── page.tsx            # Overview (stats cards)
-│   │       └── orders/
-│   │           ├── page.tsx        # Orders server component
-│   │           ├── orders-list.tsx # Client card grid + empty state
-│   │           └── actions.ts      # Server actions (fetch, mark delivered)
-│   ├── api/
-│   │   ├── health/route.ts         # Health check endpoint
-│   │   ├── assistant/route.ts      # AI assistant (future)
-│   │   └── webhooks/n8n/route.ts   # n8n webhook receiver
-│   └── auth/
-│       └── callback/route.ts       # Email confirmation callback
-├── components/
-│   ├── ui/                         # Button, Card, Input, Dialog
-│   ├── layout/                     # Navbar, Footer, Container, SectionWrapper
-│   └── forms/                      # FormInput (reusable)
-├── lib/
-│   ├── supabase/
-│   │   ├── client.ts               # Browser Supabase client
-│   │   └── server.ts               # Server Supabase client + admin client
-│   ├── auth.ts                     # Auth helper functions
-│   └── utils.ts                    # cn(), formatINR(), getInitials()
-├── types/
-│   ├── database.ts                 # TypeScript types (mirrors Prisma schema)
-│   └── index.ts                    # Re-exports
-├── prisma/
-│   └── schema.prisma               # Multi-tenant schema (8 models)
-├── supabase/
-│   └── migrations/
-│       └── 001_initial_schema.sql  # Full SQL schema + RLS policies
-├── proxy.ts                        # Clerk middleware (clerkMiddleware())
-├── .env.local                      # Secrets (git-ignored)
-└── package.json
-```
+Open [http://localhost:3000](http://localhost:3000) to view the web dashboard.
 
 ---
 
-## Database Schema
+### Step 4: Install & Start the AI Voice Agent
+1. Navigate to the `Rookies` root (or where the agent subfolder lies).
+2. Set up a Python virtual environment and install dependencies:
+   ```bash
+   cd agent
+   python -m venv .venv
+   
+   # On Windows:
+   .venv\Scripts\activate
+   # On macOS/Linux:
+   source .venv/bin/activate
+   
+   pip install -r requirements.txt
+   ```
+   *(Note: Make sure your `requirements.txt` includes `livekit-agents>=0.12.0`, `livekit-plugins-openai`, `livekit-plugins-silero`, `livekit-plugins-deepgram`, `livekit-plugins-groq`, `python-dotenv`, and `aiohttp`)*.
 
-Multi-tenant architecture — every record is scoped to a `business_id`:
+3. Create an `.env` file in the `agent` folder:
+   ```env
+   LIVEKIT_URL=wss://your-livekit-project.livekit.cloud
+   LIVEKIT_API_KEY=API...
+   LIVEKIT_API_SECRET=SEC...
+   GROQ_API_KEY=gsk_...
+   DEEPGRAM_API_KEY=dg_...
+   ROOKIES_API_URL=http://localhost:3000/api/agent
+   ROOKIES_AGENT_SECRET=your_secure_agent_secret
+   ```
 
-| Table | Purpose |
-|-------|---------|
-| `businesses` | Company profiles (name, type, city, GST, logo) |
-| `business_members` | Users ↔ Businesses junction (roles: owner, admin, staff, viewer) |
-| `orders` | Order tracking with status, source, delivery date |
-| `customers` | Customer CRM (name, phone, email, address) |
-| `payments` | UPI, cash, bank transfers, card payments |
-| `inventory_items` | Stock management with low-stock alerts |
-| `activity_logs` | Audit trail for all business actions |
-
-All tables have **Row Level Security (RLS)** enabled via a `get_user_business_ids()` helper function. Users can only access data for businesses they belong to.
-
----
-
-## Authentication Flow
-
-```
-Landing Page → Sign Up (Clerk) → Business DNA Setup (/setup) → Dashboard
-                 ↕
-             Sign In (Clerk) → Dashboard
-```
-
-- **Clerk** handles all authentication (sign in, sign up, session management)
-- `clerkMiddleware()` in `proxy.ts` protects routes
-- `<ClerkProvider>` wraps the app in the root layout
-- `<UserButton>` in the dashboard sidebar and top bar for account management
-- After sign-up → redirected to `/setup` (Business DNA onboarding)
-- After sign-in → redirected to `/dashboard`
-- Navbar shows `SignedIn` / `SignedOut` states with appropriate buttons
+4. Run the voice agent in development mode:
+   ```bash
+   python main.py dev
+   ```
 
 ---
 
-## Orders Flow
+## 🗄️ Relational Database Schema (Prisma)
 
-```
-WhatsApp Customer → n8n Workflow → POST /api/webhooks/n8n → Supabase (orders table)
-                                                                 ↓
-                              Dashboard Orders Screen ← Server Action (fetch)
-                                                                 ↓
-                              "Mark as Delivered" → Server Action (update status)
-```
+Rookies utilizes a multi-tenant PostgreSQL architecture where every transactional model is securely mapped to a `Business` via `business_id` using PostgreSQL Row Level Security (RLS).
 
-The orders page uses Clerk's `auth()` to identify the user, looks up their `business_id` via `business_members`, then fetches orders with joined customer and payment data from Supabase, sorted by `created_at DESC`.
-
----
-
-## API Routes
-
-| Route | Method | Purpose |
-|-------|--------|---------|
-| `/api/health` | GET | Health check — returns system status |
-| `/api/webhooks/n8n` | POST | Receives order data from n8n WhatsApp workflows |
-| `/api/assistant` | POST | AI assistant endpoint (future) |
+| Model | Purpose | Key Attributes |
+| :--- | :--- | :--- |
+| **`User`** | Tracks merchant profiles | `clerkId`, `email`, `name`, `phone` |
+| **`Business`** | Central tenant profile | `name`, `slug`, `type`, `city`, `gstNumber` |
+| **`BusinessMember`** | Links merchants to businesses | `userId`, `businessId`, `role` (owner/admin) |
+| **`InventoryItem`** | Tracks retail items in stock | `name`, `sku`, `quantity`, `unit`, `costPrice`, `sellPrice`, `lowStockAt` |
+| **`Order`** | Records user transactions | `customer_name`, `customer_phone`, `items` (JSON), `total_amount`, `status` |
+| **`Customer`** | CRM profile of regular buyers | `name`, `phone`, `email`, `address`, `notes` |
+| **`Payment`** | Transaction logging | `amount`, `method` (UPI/cash), `status` (pending/received) |
+| **`VoiceSession`** | Log of voice-assistant room starts | `roomName`, `userId`, `startedAt`, `commandCount` |
+| **`VoiceCommand`** | Audit log of vocal intent parsed | `transcript`, `intent`, `entities` (JSON), `success` |
 
 ---
 
-## Design System
+## 🛣️ Development Roadmap
 
-Warm minimal UI with an India-first personality:
-
-| Token | Value |
-|-------|-------|
-| Primary | `#ec5b13` (warm orange) |
-| Background | `#faf8f5` (warm off-white) |
-| Clay | `#1a1a1a` (dark text) |
-| Peach Soft | `#fdf2ec` (soft highlight) |
-| Font (body) | Inter |
-| Font (headings) | Playfair Display |
-
-Key principles: soft rounded cards, neutral backgrounds, one strong CTA per card, human language, calm tone, no charts.
+- [x] Onboarding setup flow with Business DNA onboarding (4-step setup).
+- [x] Prisma Multi-tenant schema integration.
+- [x] Orders, Inventory and CRM management pages.
+- [x] Asynchronous Voice Agent core implementation using LiveKit 0.12.
+- [x] Conversational item-adding flow (`add_inventory` tool) with field-skipping.
+- [x] LiveKit bidirectional dashboard navigation sync.
+- [x] Custom context-trimming to eliminate rate-limiting latency.
+- [ ] WhatsApp Automated Messaging integration (using n8n webhook workflow).
+- [ ] Direct offline backup sync and automatic inventory alerts to WhatsApp.
+- [ ] Indian regional language support (Hindi, Marathi, Kannada) in the Voice STT/TTS pipeline.
 
 ---
 
-## Deployment
-
-### Vercel (Recommended)
-
-1. Push your code to GitHub
-2. Import the repo at [vercel.com/new](https://vercel.com/new)
-3. Add environment variables in Vercel dashboard:
-   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-   - `CLERK_SECRET_KEY`
-   - `NEXT_PUBLIC_CLERK_SIGN_IN_URL` → `/sign-in`
-   - `NEXT_PUBLIC_CLERK_SIGN_UP_URL` → `/sign-up`
-   - `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` → `/dashboard`
-   - `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` → `/setup`
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `DATABASE_URL`
-4. Deploy — builds with Turbopack
-
-### Custom Domain (Optional)
-
-1. Add your domain in Vercel project settings
-2. Point DNS (Cloudflare or registrar):
-   - CNAME `@` → `cname.vercel-dns.com`
-   - CNAME `www` → `cname.vercel-dns.com`
-
----
-
-## Development Roadmap
-
-| Phase | Feature | Status |
-|-------|---------|--------|
-| 1 | Landing page | ✅ Done |
-| 2 | Clerk authentication | ✅ Done |
-| 3 | Business DNA onboarding (4-step setup) | ✅ Done |
-| 4 | Dashboard layout shell | ✅ Done |
-| 5 | Orders module (display + mark delivered) | ✅ Done |
-| 6 | n8n webhook endpoint | ✅ Stub ready |
-| 7 | WhatsApp integration | 🔲 Planned |
-| 8 | Payment tracking | 🔲 Schema ready |
-| 9 | Inventory management | 🔲 Schema ready |
-| 10 | Customer CRM | 🔲 Schema ready |
-| 11 | AI assistant | 🔲 API stub ready |
-
----
-
-## Commands
-
-```bash
-npm run dev        # Start dev server (Turbopack)
-npm run build      # Production build
-npm run start      # Start production server
-npm run lint       # Run ESLint
-```
-
----
-
-## Contributing
-
-This is a private project. For access or collaboration, contact the maintainer.
-
-## License
-
-Private — All rights reserved.
+## 📄 License & Collaboration
+This project is private and proprietary. All rights reserved. For issues, contact the repository administrator.

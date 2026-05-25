@@ -149,6 +149,8 @@ export function VoiceAgent({ businessId }: { businessId: string }) {
           if (data.type === 'navigation') {
             console.log('[agent] Navigation requested:', data.path);
             router.push(data.path);
+            // Refresh server component data so newly created records appear immediately
+            router.refresh();
           }
         } catch (e) {
           console.error('Error parsing agent data:', e);
