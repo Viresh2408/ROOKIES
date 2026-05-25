@@ -217,14 +217,14 @@ Rookies utilizes a multi-tenant PostgreSQL architecture where every transactiona
 
 ## 🛣️ Development Roadmap
 
-- [x] Onboarding setup flow with Business DNA onboarding (4-step setup).
-- [x] Prisma Multi-tenant schema integration.
-- [x] Orders, Inventory and CRM management pages.
-- [x] Asynchronous Voice Agent core implementation using LiveKit 0.12.
-- [x] Conversational item-adding flow (`add_inventory` tool) with field-skipping.
-- [x] LiveKit bidirectional dashboard navigation sync.
-- [x] Custom context-trimming to eliminate rate-limiting latency.
-- [x] **WhatsApp Automated Messaging integration (using n8n webhook workflow)** <span style="color:#10b981; background-color:#ecfdf5; border:1px solid #a7f3d0; padding:2px 8px; border-radius:12px; font-size:0.8em; font-weight:bold; margin-left:8px;">Completed</span>
+- [x] **Onboarding setup flow with Business DNA onboarding (4-step setup).** <span style="color:#ff007f; font-weight:bold; font-size:1.2em; margin-left:4px;">✔</span>
+- [x] **Prisma Multi-tenant schema integration.** <span style="color:#0070f3; font-weight:bold; font-size:1.2em; margin-left:4px;">✔</span>
+- [x] **Orders, Inventory and CRM management pages.** <span style="color:#10b981; font-weight:bold; font-size:1.2em; margin-left:4px;">✔</span>
+- [x] **Asynchronous Voice Agent core implementation using LiveKit 0.12.** <span style="color:#f59e0b; font-weight:bold; font-size:1.2em; margin-left:4px;">✔</span>
+- [x] **Conversational item-adding flow (`add_inventory` tool) with field-skipping.** <span style="color:#8b5cf6; font-weight:bold; font-size:1.2em; margin-left:4px;">✔</span>
+- [x] **LiveKit bidirectional dashboard navigation sync.** <span style="color:#ec4899; font-weight:bold; font-size:1.2em; margin-left:4px;">✔</span>
+- [x] **Custom context-trimming to eliminate rate-limiting latency.** <span style="color:#06b6d4; font-weight:bold; font-size:1.2em; margin-left:4px;">✔</span>
+- [x] **WhatsApp Automated Messaging integration (using n8n webhook workflow)** <span style="color:#14b8a6; font-weight:bold; font-size:1.2em; margin-left:4px;">✔</span>
 - [ ] Direct offline backup sync and automatic inventory alerts to WhatsApp.
 - [ ] Indian regional language support (Hindi, Marathi, Kannada) in the Voice STT/TTS pipeline.
 
